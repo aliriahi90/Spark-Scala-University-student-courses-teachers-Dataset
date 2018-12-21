@@ -1,0 +1,71 @@
+Start the Spark Shell.
+spark-shell<enter>
+
+
+
+Import Spark implicits.
+
+import spark.implicits._
+
+
+
+See which Hive tables are available.
+
+spark.sql("show tables").show()
+
+
+
+Show the first 20 rows in a table named purchases.
+
+spark.sql("select * from purchases").show()
+
+
+
+Load all the rows, in the purchases table, into a Spark Dataframe.
+
+val purch = spark.sql("select * from purchases")
+
+
+
+Look at the first 20 rows in the purch Dataframe.
+
+purch.show()
+
+
+
+Use the Dataframe functions (not spark sql) to create a new Dataframe that contains the purch rows where the purchase id is greater than 15.
+
+
+val purchOverFifteen = purch.filter("purchase_id > 15")
+
+
+
+Use the Dataframe functions (not Spark SQL) to create a new Dataframe that contains the purchOverFifteen rows and a new field, named Month, that holds the 3 letter abbreviation for the current month.
+
+val purchWithMonth = purchOverFifteen.select("*").withColumn("Month",lit("Nov"))
+
+
+
+Create a temp view that holds the purchWithMonth data, so you can do a join, using Spark SQL.
+purchWithMonth.createOrReplaceTempView("purchWithMonth")
+
+
+
+There's another Hive table, named Buyer. The Buyer table has a column, buyer_num. Use Spark SQL to create a new Dataframe named purchWithBuyerNum that has the purchWithMonth data along with the buyer's number
+
+val purchWithBuyerNum = spark.sql("select purchWithMonth.*, buyers.buyer_num from purchWithMonth join buyers on purchWithMonth.buyer = buyers.buy
+er_name")
+
+
+
+Using the Spark Dataframe functions, not Spark SQL, create a new Dataframe, named, buyerSummary that holds a count of the purchase transactions for each buyer.
+
+val buyerSummary = purchWithBuyerNum.groupBy("buyer").agg(count("*"))
+
+
+
+Using the Spark Dataframe functions, not Spark SQL, do an inner join of the purchWithMonth and the buyer table.
+
+val buyers = spark.sql("select * from buyers")
+
+val purchWithBuyerAgain = purchWithMonth.join(buyers, purchWithMonth.col("buyer") === buyers.col("buyer_name"), "inner")
